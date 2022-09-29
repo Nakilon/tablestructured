@@ -17,9 +17,10 @@ module TableStructured
       rescue NameError
         raise $!.exception "#{$!}: #{ss.inspect}"
       end
+      require "timeout"
       object.css("tbody>tr").map do |_|
         tds = []
-        Timeout.timeout 2 do
+        ::Timeout.timeout 2 do
           tds = _.css("td")[drop_first..-1-drop_last]
           if tds.empty?
             STDERR.puts "empty row"
