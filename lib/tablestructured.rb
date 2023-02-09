@@ -5,22 +5,26 @@ module TableStructured
       raise ArgumentError, "passed object can be an Array or Ferrum Node, but not Nil"
     elsif object.respond_to? :css
       # the xml object ignores the :headers arg for now
-      ss = if :top == headers
+      names = if :top == headers
         object
       elsif headers.respond_to? :css
         headers
       else
         fail "invalid type of headers"
-      end.css("th")[drop_first..-1-drop_last].map{ |_| _.text.sub(/\A[[[:space:]]]*/,"").sub(/[[[:space:]]]*\z/,"").to_sym }
+      end.css("th")[drop_first..-1-drop_last].map do |_|
+        _.text.sub(/\A[[[:space:]]]*/,"").sub(/[[[:space:]]]*\z/,"")
+      end
+      t = names.group_by(&:itself).map{ |k, g| [k, g.size.times.to_a] if 1 < g.size }.compact.to_h
+      names = names.map{ |_| if i = t[_]&.shift then "#{_}_#{i+1}" else _ end.to_sym }
       struct = begin
-        Struct.new *ss
+        Struct.new *names
       rescue NameError
-        raise $!.exception "#{$!}: #{ss.inspect}"
+        raise $!.exception "#{$!}: #{names.inspect}"
       end
       require "timeout"
       object.css("tbody>tr").map do |_|
         tds = []
-        ::Timeout.timeout 2 do
+        Timeout.timeout 2 do
           tds = _.css("td")[drop_first..-1-drop_last]
           if tds.empty?
             STDERR.puts "empty row"
@@ -28,7 +32,7 @@ module TableStructured
             redo
           end
         end
-        raise Error, "size mismatch (#{ss.size} headers, #{tds.size} row items)" if tds.size != ss.size
+        raise Error, "size mismatch (#{names.size} headers, #{tds.size} row items)" if tds.size != names.size
         struct.new *tds
       end
     else

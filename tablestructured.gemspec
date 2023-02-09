@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name         = "tablestructured"
-  spec.version      = "0.2.1"
+  spec.version      = "0.3.0"
   spec.summary      = "convert two-dimensional Array into an Array of Structs consuming the first row and/or column as attributes"
 
   spec.author       = "Victor Maslov aka Nakilon"
