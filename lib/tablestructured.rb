@@ -11,7 +11,7 @@ module TableStructured
         headers
       else
         fail "invalid type of headers"
-      end.css("th")[drop_first..-1-drop_last].map do |_|
+      end.css("thead th")[drop_first..-1-drop_last].map do |_|
         _.text.sub(/\A[[[:space:]]]*/,"").sub(/[[[:space:]]]*\z/,"")
       end
       t = names.group_by(&:itself).map{ |k, g| [k, g.size.times.to_a] if 1 < g.size }.compact.to_h
@@ -22,17 +22,17 @@ module TableStructured
         raise $!.exception "#{$!}: #{names.inspect}"
       end
       require "timeout"
-      object.css("tbody>tr").map do |_|
+      object.css("tbody > tr").map do |row|
         tds = []
-        Timeout.timeout 2 do
-          tds = _.css("td")[drop_first..-1-drop_last]
+        Timeout.timeout 5 do
+          tds = [row.css("th"), *row.css("td")][drop_first..-1-drop_last]
           if tds.empty?
             STDERR.puts "empty row"
             sleep 0.1
             redo
           end
         end
-        raise Error, "size mismatch (#{names.size} headers, #{tds.size} row items)" if tds.size != names.size
+        raise Error, "size mismatch (#{names.size} headers (#{names}), #{tds.size} row items)" if tds.size != names.size
         struct.new *tds
       end
     else
