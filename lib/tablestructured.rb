@@ -25,7 +25,7 @@ module TableStructured
       object.css("tbody > tr").map do |row|
         tds = []
         Timeout.timeout 5 do
-          tds = [row.css("th"), *row.css("td")][drop_first..-1-drop_last]
+          tds = [*row.css("th"), *row.css("td")][drop_first..-1-drop_last]
           if tds.empty?
             STDERR.puts "empty row"
             sleep 0.1
