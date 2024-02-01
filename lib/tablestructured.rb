@@ -1,6 +1,6 @@
 module TableStructured
   Error = Class.new RuntimeError
-  def self.new object, headers: :top, drop_first: 0, drop_last: 0  # TODO: headers_left should probably mean the ids of entries
+  def self.new object, headers: :top, drop_first: 0, drop_last: 0, timeout: 5  # TODO: headers_left should probably mean the ids of entries
     if object.nil?
       raise ArgumentError, "passed object can be an Array or Ferrum Node, but not Nil"
     elsif object.respond_to? :css
@@ -24,10 +24,10 @@ module TableStructured
       require "timeout"
       object.css("tbody > tr").map do |row|
         tds = []
-        Timeout.timeout 5 do
+        Timeout.timeout timeout do
           tds = [*row.css("th"), *row.css("td")][drop_first..-1-drop_last]
           if tds.empty?
-            STDERR.puts "empty row"
+            STDERR.puts "TableStructured: no rows"
             sleep 0.1
             redo
           end
