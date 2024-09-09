@@ -3,7 +3,16 @@ module TableStructured
   def self.new object, headers: :top, drop_first: 0, drop_last: 0, timeout: 5  # TODO: headers_left should probably mean the ids of entries
     if object.nil?
       raise ArgumentError, "passed object can be an Array or Ferrum Node, but not Nil"
-    elsif object.respond_to? :css
+    end
+    unless object.respond_to? :css
+      names = (:top == headers ? object.first : headers).map do |_|
+        _.to_s.sub(/\A[[[:space:]]]*/, "").sub(/[[[:space:]]]*\z/, "")
+      end
+      t = names.group_by(&:itself).map{ |k, g| [k, g.size.times.to_a] if 1 < g.size }.compact.to_h
+      names = names.map{ |_| if i = t[_]&.shift then "#{_}_#{i+1}" else _ end.to_sym }
+      struct = Struct.new *names.map(&:to_s).map(&:to_sym).tap{ |_| fail "headers should be unique" if _.uniq! }
+      object.drop(headers == :top ? 1 : 0).map{ |_| struct.new *_ }
+    else
       # the xml object ignores the :headers arg for now
       names = if :top == headers
         object
@@ -35,9 +44,6 @@ module TableStructured
         raise Error, "size mismatch (#{names.size} headers (#{names}), #{tds.size} row items)" if tds.size != names.size
         struct.new *tds
       end
-    else
-      struct = Struct.new *(headers == :top ? object.first : headers).map(&:to_s).map(&:to_sym).tap{ |_| fail "headers should be unique" if _.uniq! }
-      object.drop(headers == :top ? 1 : 0).map{ |_| struct.new *_ }
     end
   end
 end
