@@ -6,7 +6,7 @@ module TableStructured
     end
     unless object.respond_to? :css
       names = (:top == headers ? object.first : headers).map do |_|
-        _.to_s.sub(/\A[[[:space:]]]*/, "").sub(/[[[:space:]]]*\z/, "")
+        _.to_s.sub(/\A[[[:space:]]]*/, "").sub(/[[[:space:]]]*\z/, "").tap{ |_| _[0] ||= "_" }
       end
       t = names.group_by(&:itself).map{ |k, g| [k, g.size.times.to_a] if 1 < g.size }.compact.to_h
       names = names.map{ |_| if i = t[_]&.shift then "#{_}_#{i+1}" else _ end.to_sym }
